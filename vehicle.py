@@ -1,6 +1,6 @@
 from copy import deepcopy
 H = 1
-V = 8
+V = 8 #8x8 for the barrier
 
 class Vehicle:
     def __init__(self, mask, orientation):
@@ -16,8 +16,10 @@ class Vehicle:
     
     def move(self, step):
         if step == 1: # Forward -> Right or Down
-            self.mask >>= self.orientation
-        elif step == -1: # Backward -> Left or Up
+            # self.mask >>= self.orientation
             self.mask <<= self.orientation
+        elif step == -1: # Backward -> Left or Up
+            # self.mask <<= self.orientation
+            self.mask >>= self.orientation
 
         return self

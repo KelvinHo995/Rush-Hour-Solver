@@ -1,14 +1,14 @@
 from state import State
 from vehicle import Vehicle
-from dfs_solver import dfs
-from ids_solver import iterative_deepening_search
+from recursive_dfs import *
 H = 1
 mask = (1 << 37) | (1 << 36)  # Xe nằm ngang tại (3,2)-(3,3)
 red_car = Vehicle(mask, H)
 initial_state = State(vehicle_list=[red_car])
 
 #path = dfs(initial_state, max_depth=20)
-path = iterative_deepening_search(initial_state, max_depth=20)
+#path = iterative_deepening_search(initial_state, max_depth=20)
+path = dfs_solver(initial_state, max_depth=50)
 with open("output.txt", "w", encoding="utf-8") as f:
     f.write("=== TRẠNG THÁI BAN ĐẦU ===\n")
     f.write(str(initial_state) + "\n")

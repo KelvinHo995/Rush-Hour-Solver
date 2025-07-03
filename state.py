@@ -44,6 +44,7 @@ class State:
         collision = (self.get_mask() ^ vehicle.get_mask()) & moved_vehicle.get_mask()
         
         if not collision:
+            self.vehicle_list[id] = moved_vehicle
             if vehicle.orientation == H:
                 self.hor_mask ^= vehicle.get_mask()
                 self.hor_mask |= moved_vehicle.get_mask()

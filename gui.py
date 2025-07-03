@@ -46,10 +46,12 @@ class SettingsFrame(ctk.CTkFrame):
         # These guys need to be attributes in order to call them in functions
         self.pause_button = ctk.CTkButton(self, text="PAUSE", command=self.pause)
         self.play_button = ctk.CTkButton(self, text="PLAY", command=self.play)
+        self.reset_button = ctk.CTkButton(self, text="RESET", command=self.reset)
         self.board = PuzzleBoard(self, 600, 600)
 
         self.play_button.place(x=650, y=140)
         self.pause_button.place(x=650, y=140)
+        self.reset_button.place(x=650, y=170)
         self.board.place(x=200, y=100)
 
     def animate(self):
@@ -68,6 +70,14 @@ class SettingsFrame(ctk.CTkFrame):
     def pause(self):
         self.is_running = False
         self.play_button.tkraise()
+
+    def reset(self):
+        self.is_running = False
+        self.play_button.tkraise()
+        self.board.delete("all")
+        self.board = PuzzleBoard(self, 600, 600)
+        self.board.place(x=200, y=100)
+
         
 class PuzzleBoard(tk.Canvas):
     def __init__(self, parent, width, height):

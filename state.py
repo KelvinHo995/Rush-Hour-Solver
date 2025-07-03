@@ -15,6 +15,9 @@ class State:
             else:
                 self.ver_mask |= vehicle.get_mask()
 
+    def __hash__(self):
+        return hash((self.hor_mask, self.ver_mask))
+
     def __str__(self):
         res = ""
         
@@ -41,9 +44,14 @@ class State:
         vehicle = self.vehicle_list[id]
         moved_vehicle = vehicle.deepcopy().move(step)
 
-        collision = (self.get_mask() ^ vehicle.get_mask()) & moved_vehicle.get_mask()
+        occupied_mask = self.get_mask() ^ vehicle.get_mask()
+        collision = occupied_mask & moved_vehicle.get_mask()
+        ##collision = (self.get_mask() ^ vehicle.get_mask()) & moved_vehicle.get_mask()
         
         if not collision:
+            #Cập nhật vehicle trong danh sách (uhuhuhhuh tìm mãi ko ra bug chỗ này)
+            self.vehicle_list[id] = moved_vehicle
+
             if vehicle.orientation == H:
                 self.hor_mask ^= vehicle.get_mask()
                 self.hor_mask |= moved_vehicle.get_mask()
@@ -60,11 +68,13 @@ class State:
         next_states = []
 
         for i in range(len(self.vehicle_list)):
+            #Tiến
             next_state = self.deepcopy()
             if next_state.move_vehicle(i, 1):
                 moves.append((i, 1))
                 next_states.append(next_state.deepcopy())
 
+            #Lùi
             next_state = self.deepcopy()
             if next_state.move_vehicle(i, -1):
                 moves.append((i, -1))

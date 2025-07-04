@@ -37,10 +37,12 @@ class HomeFrame(ctk.CTkFrame):
 class SettingsFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
+
         self.is_running = False
+        self.after_id = None
 
         label = ctk.CTkLabel(self, text="Settings", font=("Arial", 24))
-        home_button = ctk.CTkButton(self, text="Back to Home",command=lambda: parent.show_frame("HomeFrame"))
+        home_button = ctk.CTkButton(self, text="Back to Home",command=lambda: self.go_home(parent))
 
         home_button.place(x=650, y=110)
         # These guys need to be attributes in order to call them in functions
@@ -59,27 +61,40 @@ class SettingsFrame(ctk.CTkFrame):
             return None
         
         self.board.solve()
-        self.after(2000, self.animate)
+        self.after_id = self.after(2000, self.animate)
 
         
     def play(self):
         self.is_running = True
         self.pause_button.tkraise()
-        self.board.after(500, self.animate)
+        self.after_id = self.board.after(500, self.animate)
     
     def pause(self):
+        if self.after_id:
+            self.after_cancel(self.after_id)
+            self.after_id = None
         self.is_running = False
+
         self.play_button.tkraise()
 
     def reset(self):
+        if self.after_id:
+            self.after_cancel(self.after_id)
+            self.after_id = None
         self.is_running = False
-        self.play_button.tkraise()
-        self.board.delete("all")
-        self.board = PuzzleBoard(self, 600, 600)
-        self.board.place(x=200, y=100)
 
-        
-class PuzzleBoard(tk.Canvas):
+        self.play_button.tkraise()
+
+        if self.board.moved():
+            self.board.delete("all")
+            self.board = PuzzleBoard(self, 600, 600)
+            self.board.place(x=200, y=100)
+
+    def go_home(self, parent):
+        self.reset()
+        parent.show_frame("HomeFrame")
+
+class PuzzleBoard(ctk.CTkCanvas):
     def __init__(self, parent, width, height):
         super().__init__(parent, width=width, height=height)
         self.current_move = 0        
@@ -87,10 +102,13 @@ class PuzzleBoard(tk.Canvas):
         audi_image = self.load_img("img/Audi.png")
 
         self.image_refs = audi_image
-        self.audi = self.create_image(0, 0, image=audi_image, anchor='nw')
+        self.audi = self.create_image(0, 100, image=audi_image, anchor='nw')
+
 
     def load_img(self, path):
         img = Image.open(path)
+        img = img.crop(img.getbbox())
+        img = img.rotate(90, expand=True)
         img = img.resize((200, 100))
         img = ImageTk.PhotoImage(img)
         return img
@@ -98,8 +116,11 @@ class PuzzleBoard(tk.Canvas):
     def solve(self):
         if self.current_move == 6:
             return
-        self.move(self.audi, 0, 100)
+        self.move(self.audi, 100, 0)
         self.current_move += 1
+    
+    def moved(self):
+        return self.current_move > 0
 
 
 if __name__ == "__main__":

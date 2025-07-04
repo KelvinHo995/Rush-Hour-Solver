@@ -21,3 +21,10 @@ class Vehicle:
             self.mask <<= self.orientation
 
         return self
+
+    def get_position(self):
+        msb = self.mask.bit_length() - 1
+        row = 6 - (msb >> 3)
+        column = 6 - (msb & ((1 << 3) - 1))
+
+        return row, column

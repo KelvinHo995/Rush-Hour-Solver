@@ -14,6 +14,12 @@ class Vehicle:
     def get_mask(self):
         return self.mask
     
+    def get_orientation(self):
+        return self.orientation
+    
+    def get_weight(self):
+        return self.weight
+    
     def move(self, step):
         if step == 1: # Forward -> Right or Down
             self.mask >>= self.orientation

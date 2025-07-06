@@ -1,6 +1,8 @@
 import customtkinter as ctk
 import tkinter as tk
 from PIL import Image, ImageTk
+from vehicle import Vehicle, V, H
+from state import State
 
 class App(ctk.CTk):
     def __init__(self):
@@ -38,10 +40,11 @@ class SettingsFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
 
+        self.vehicle_list = [Vehicle((1 << 37) + (1 << 38), H)]
+        self.move_list = [(0, 1), (0, 1), (0, 1), (0, -1), (0, 1), (0, 1)]
         self.is_running = False
         self.after_id = None
 
-        label = ctk.CTkLabel(self, text="Settings", font=("Arial", 24))
         home_button = ctk.CTkButton(self, text="Back to Home",command=lambda: self.go_home(parent))
         home_button.place(x=650, y=110)
 
@@ -49,7 +52,8 @@ class SettingsFrame(ctk.CTkFrame):
         self.pause_button = ctk.CTkButton(self, text="PAUSE", command=self.pause)
         self.play_button = ctk.CTkButton(self, text="PLAY", command=self.play)
         self.reset_button = ctk.CTkButton(self, text="RESET", command=self.reset)
-        self.board = PuzzleBoard(self, 600, 600)
+        self.board = PuzzleBoard(self, 600, 600).create_vehicle_list(self.vehicle_list)
+        self.board.create_move_list(self.move_list)
 
         self.play_button.place(x=650, y=140)
         self.pause_button.place(x=650, y=140)
@@ -62,6 +66,7 @@ class SettingsFrame(ctk.CTkFrame):
         option_menu = ctk.CTkOptionMenu(self, values=options, variable=self.algorithm)
 
         option_menu.place(x=650, y=200)
+
     def animate(self):
         if self.is_running == False:
             return None
@@ -104,11 +109,49 @@ class PuzzleBoard(ctk.CTkCanvas):
         super().__init__(parent, width=width, height=height, borderwidth=2, relief="solid")
         self.current_move = 0        
         self.after_id = None
+        self.vehicle_list = None
+        self.orientation_list = None
+        self.move_list = None
 
         self.draw_grid()
 
-        self.audi = self.create_round_rectangle(103, 103, 297, 197, radius=25, fill="red")
+    def create_move_list(self, move_list):
+        self.move_list = move_list
 
+    def create_vehicle_list(self, vehicle_list):
+        self.vehicle_list = []
+        self.orientation_list = []
+
+        for i, vehicle in enumerate(vehicle_list):
+
+            # Rectangle corners, orientation and grid length
+            row, col = vehicle.get_position()
+            x1 = col * 100 + 3
+            y1 = row * 100 + 3
+            orientation = vehicle.get_orientation()
+            length = vehicle.get_weight()
+
+            if orientation == H:
+                x2 = (col + length) * 100 - 3
+                y2 = (row + 1) * 100 - 3
+            else:
+                x2 = (col+ 1) * 100 - 3
+                y2 = (row + length) * 100 - 3
+
+            # Color 
+            if i == 0:
+                color = 'red'
+            elif length == 2:
+                color = 'blue'
+            else:
+                color = 'green'
+
+            # Append
+            self.vehicle_list.append(self.create_round_rectangle(x1, y1, x2, y2, fill=color))
+            self.orientation_list.append(vehicle.get_orientation())
+
+        return self
+    
     def create_round_rectangle(self, x1, y1, x2, y2, radius=25, **kwargs):
         
         points = [x1+radius, y1,
@@ -158,17 +201,25 @@ class PuzzleBoard(ctk.CTkCanvas):
             self.after_cancel(self.after_id)
             self.after_id = None
 
-        if self.current_move == 6:
+        if self.current_move == len(self.move_list):
             return
         
-        self.slide(self.audi)
+        id, step = self.move_list[self.current_move]
+
+        self.slide(self.vehicle_list[id], self.orientation_list[id], step)
+
         self.current_move += 1
     
-    def slide(self, car, cnt=0):
+    def slide(self, car, orientation, step, cnt=0):
         if cnt == 50:
             return
-        self.move(car, 2, 0)
-        self.after_id = self.after(16, lambda: self.slide(car, cnt + 1))
+        
+        if orientation == H:
+            self.move(car, 2 * step, 0)
+        else:
+            self.move(car, 0, 2 * step)
+
+        self.after_id = self.after(16, lambda: self.slide(car, orientation, step, cnt + 1))
 
     def moved(self):
         return self.current_move > 0

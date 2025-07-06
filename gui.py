@@ -43,8 +43,8 @@ class SettingsFrame(ctk.CTkFrame):
 
         label = ctk.CTkLabel(self, text="Settings", font=("Arial", 24))
         home_button = ctk.CTkButton(self, text="Back to Home",command=lambda: self.go_home(parent))
-
         home_button.place(x=650, y=110)
+
         # These guys need to be attributes in order to call them in functions
         self.pause_button = ctk.CTkButton(self, text="PAUSE", command=self.pause)
         self.play_button = ctk.CTkButton(self, text="PLAY", command=self.play)
@@ -56,14 +56,19 @@ class SettingsFrame(ctk.CTkFrame):
         self.reset_button.place(x=650, y=170)
         self.board.place(x=200, y=100)
 
+        # Algorithm options
+        options = ['DFS', 'BFS', 'UCS', 'A*']
+        self.algorithm = ctk.StringVar(value=options[0])
+        option_menu = ctk.CTkOptionMenu(self, values=options, variable=self.algorithm)
+
+        option_menu.place(x=650, y=200)
     def animate(self):
         if self.is_running == False:
             return None
         
         self.board.solve()
-        self.after_id = self.after(2000, self.animate)
+        self.after_id = self.after(1800, self.animate)
 
-        
     def play(self):
         self.is_running = True
         self.pause_button.tkraise()
@@ -86,7 +91,7 @@ class SettingsFrame(ctk.CTkFrame):
         self.play_button.tkraise()
 
         if self.board.moved():
-            self.board.delete("all")
+            self.board.destroy()
             self.board = PuzzleBoard(self, 600, 600)
             self.board.place(x=200, y=100)
 
@@ -96,29 +101,75 @@ class SettingsFrame(ctk.CTkFrame):
 
 class PuzzleBoard(ctk.CTkCanvas):
     def __init__(self, parent, width, height):
-        super().__init__(parent, width=width, height=height)
+        super().__init__(parent, width=width, height=height, borderwidth=2, relief="solid")
         self.current_move = 0        
+        self.after_id = None
+
+        self.draw_grid()
+
+        self.audi = self.create_round_rectangle(103, 103, 297, 197, radius=25, fill="red")
+
+    def create_round_rectangle(self, x1, y1, x2, y2, radius=25, **kwargs):
         
-        audi_image = self.load_img("img/Audi.png")
+        points = [x1+radius, y1,
+                x1+radius, y1,
+                x2-radius, y1,
+                x2-radius, y1,
+                x2, y1,
+                x2, y1+radius,
+                x2, y1+radius,
+                x2, y2-radius,
+                x2, y2-radius,
+                x2, y2,
+                x2-radius, y2,
+                x2-radius, y2,
+                x1+radius, y2,
+                x1+radius, y2,
+                x1, y2,
+                x1, y2-radius,
+                x1, y2-radius,
+                x1, y1+radius,
+                x1, y1+radius,
+                x1, y1]
 
-        self.image_refs = audi_image
-        self.audi = self.create_image(0, 100, image=audi_image, anchor='nw')
-
-
-    def load_img(self, path):
-        img = Image.open(path)
-        img = img.crop(img.getbbox())
-        img = img.rotate(90, expand=True)
-        img = img.resize((200, 100))
-        img = ImageTk.PhotoImage(img)
-        return img
+        return self.create_polygon(points, **kwargs, smooth=True)
     
+    def draw_grid(self):
+        THICKNESS = 2
+        COLOR = 'black'
+        HEIGHT = 600
+        WIDTH = 600
+        ROW = 6
+        COL = 6
+        ROW_HEIGHT = 100
+        COL_WIDTH = 100
+
+        for i in range(ROW):
+            y = i * ROW_HEIGHT
+            self.create_line(0, y, 605, y, fill=COLOR, width=THICKNESS)
+
+        # Draw vertical lines
+        for i in range(COL):
+            x = i * COL_WIDTH
+            self.create_line(x, 0, x, 605, fill=COLOR, width=THICKNESS)
+
     def solve(self):
+        if self.after_id:
+            self.after_cancel(self.after_id)
+            self.after_id = None
+
         if self.current_move == 6:
             return
-        self.move(self.audi, 100, 0)
+        
+        self.slide(self.audi)
         self.current_move += 1
     
+    def slide(self, car, cnt=0):
+        if cnt == 50:
+            return
+        self.move(car, 2, 0)
+        self.after_id = self.after(16, lambda: self.slide(car, cnt + 1))
+
     def moved(self):
         return self.current_move > 0
 

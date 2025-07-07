@@ -11,20 +11,16 @@ MAX_OPEN_SET_SIZE = 100000
 # === UTILITY FUNCTIONS ===
 
 def popcount(x):
-    return bin(x).count("1")
+    return x.bit_count()
 
 def distance_from_bits(red_car_mask):
     # Tìm vị trí bit bên phải nhất (tức đầu xe đỏ hướng ra goal)
-    for i in range(64):
-        if (red_car_mask >> (63 - i)) & 1:
-            row = i // 8
-            col = i % 8
-            return 6 - col  # cột 6 là goal, cột 7 là tường
-    return 999  # lỗi
+    lsb = (red_car_mask & -red_car_mask)  
+    return 6 - (lsb & 7)
 
-def fast_heuristic(mask):
-    red_car_bits = mask & RED_CAR_MASK
-    blocking_bits = mask & BLOCKING_PATH_MASK
+def fast_heuristic(state):
+    red_car_bits = state.get_red_car_mask()
+    blocking_bits = state.get_mask() & BLOCKING_PATH_MASK
     return popcount(blocking_bits) + distance_from_bits(red_car_bits)
 
 # === A* SOLVER ===
@@ -39,9 +35,9 @@ def a_star_solver(initial_state):
     open_set = []
     state_map = {}  # bitmask → state object
 
-    init_mask = initial_state.get_mask()
+    init_mask = initial_state.get_mask()    
     g = 0
-    h = fast_heuristic(init_mask)
+    h = fast_heuristic(initial_state)
     f = g + h
 
     #heapq.heappush(open_set, (f, g, initial_state, []))
@@ -61,12 +57,15 @@ def a_star_solver(initial_state):
             print(f"⏱️ Thời gian: {time.time() - start_time:.2f} giây")
             return path + [state], move_seq
 
+        if g > visited_g[current_mask]:
+            continue
+
         moves, successors = state.get_successors()
 
         for move, next_state in zip(moves, successors):
             next_mask = next_state.get_mask()
             new_g = g + 1
-            new_h = fast_heuristic(next_mask)
+            new_h = fast_heuristic(next_state)
             new_f = new_g + new_h
 
             if new_g < visited_g[next_mask]:
@@ -76,7 +75,7 @@ def a_star_solver(initial_state):
                 heapq.heappush(open_set, (new_f, next(counter), new_g, next_mask, path + [state], move_seq + [move]))
  
 
-        # Giới hạn open set (OPTIONAL)
+        # Giới hạn open set (OPTIONAL)  
         if len(open_set) > MAX_OPEN_SET_SIZE:
             open_set = heapq.nsmallest(MAX_OPEN_SET_SIZE // 2, open_set)
             heapq.heapify(open_set)

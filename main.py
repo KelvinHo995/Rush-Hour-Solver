@@ -1,7 +1,7 @@
 from state import State
-from vehicle import Vehicle
+from vehicle import Vehicle, H, V
 from recursive_dfs import *
-H = 1
+
 mask = (1 << 37) | (1 << 36)  # Xe nằm ngang tại (3,2)-(3,3)
 red_car = Vehicle(mask, H)
 initial_state = State(vehicle_list=[red_car])

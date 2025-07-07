@@ -6,7 +6,6 @@ class Vehicle:
     def __init__(self, mask, orientation):
         self.mask = mask
         self.orientation = orientation
-        self.weight = mask.bit_count()
     
     def deepcopy(self):
         return deepcopy(self)
@@ -18,7 +17,7 @@ class Vehicle:
         return self.orientation
     
     def get_weight(self):
-        return self.weight
+        return self.mask.bit_count()
     
     def move(self, step):
         if step == 1: # Forward -> Right or Down
@@ -31,6 +30,6 @@ class Vehicle:
     def get_position(self):
         msb = self.mask.bit_length() - 1
         row = 6 - (msb >> 3)
-        column = 6 - (msb & ((1 << 3) - 1))
+        column = 6 - (msb & 7)
 
         return row, column

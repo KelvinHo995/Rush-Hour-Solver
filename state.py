@@ -1,5 +1,5 @@
 from copy import deepcopy
-from vehicle import *
+from vehicle import Vehicle, H, V
 
 ONLY_WALLS = 18411139144890810879
 
@@ -16,7 +16,8 @@ class State:
                 self.ver_mask |= vehicle.get_mask()
 
     def __hash__(self):
-        return hash((self.hor_mask, self.ver_mask))
+        # return hash((self.hor_mask, self.ver_mask))
+        return self.get_mask()
 
     def __str__(self):
         res = ""
@@ -37,6 +38,9 @@ class State:
     def get_mask(self):
         return self.hor_mask | self.ver_mask
     
+    def get_red_car_mask(self):
+        return self.vehicle_list[0].get_mask()
+    
     def deepcopy(self):
         return deepcopy(self)
     
@@ -46,7 +50,6 @@ class State:
 
         occupied_mask = self.get_mask() ^ vehicle.get_mask()
         collision = occupied_mask & moved_vehicle.get_mask()
-        ##collision = (self.get_mask() ^ vehicle.get_mask()) & moved_vehicle.get_mask()
         
         if not collision:
             #Cập nhật vehicle trong danh sách (uhuhuhhuh tìm mãi ko ra bug chỗ này)

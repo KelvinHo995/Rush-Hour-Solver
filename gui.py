@@ -3,6 +3,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from vehicle import Vehicle, V, H
 from state import State
+from a_star_solver import a_star_solver
 
 class App(ctk.CTk):
     def __init__(self):
@@ -39,9 +40,21 @@ class HomeFrame(ctk.CTkFrame):
 class SettingsFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
+        
+        ve1 = Vehicle((1 << 37) | (1 << 36), H)  #red car
+        ve2 = Vehicle((1 << 43) | (1 << 35), V)  
+        ve3 = Vehicle((1 << 34) | (1 << 42) | (1 << 50), V)
+        ve4 = Vehicle((1 << 49) | (1 << 41) | (1 << 33), V)
+        ve5 = Vehicle((1 << 26) | (1 << 25), H)
+        ve6 = Vehicle((1 << 28) | (1 << 20), V)
+        ve7 = Vehicle((1 << 27) | (1 << 19), V)
+        ve8 = Vehicle((1 << 14) | (1 << 13), H)
+        ve9 = Vehicle((1 << 10) | (1 << 9), H)
+        # return State([ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9])
+        self.vehicle_list = [ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9]
 
-        self.vehicle_list = [Vehicle((1 << 37) + (1 << 38), H)]
-        self.move_list = [(0, 1), (0, 1), (0, 1), (0, -1), (0, 1), (0, 1)]
+        path, moves = a_star_solver(State(self.vehicle_list))
+        self.move_list = moves
         self.is_running = False
         self.after_id = None
 
@@ -97,7 +110,7 @@ class SettingsFrame(ctk.CTkFrame):
 
         if self.board.moved():
             self.board.destroy()
-            self.board = PuzzleBoard(self, 600, 600)
+            self.board = PuzzleBoard(self, 600, 600).create_vehicle_list(self.vehicle_list)
             self.board.place(x=200, y=100)
 
     def go_home(self, parent):

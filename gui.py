@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 from vehicle import Vehicle, V, H
 from state import State
 from a_star_solver import a_star_solver
+from recursive_dfs import dfs_solver
 
 class App(ctk.CTk):
     def __init__(self):
@@ -14,7 +15,7 @@ class App(ctk.CTk):
 
         self.frames = {}
 
-        for F in (HomeFrame, SettingsFrame):
+        for F in (HomeFrame, SolveFrame):
             frame = F(parent=self)
             self.frames[F.__name__] = frame
             frame.place(relwidth=1, relheight=1)
@@ -37,7 +38,7 @@ class HomeFrame(ctk.CTkFrame):
         button1.place(relx=0.4, rely=0.1, relwidth=0.2, relheight=0.1)
         button2.place(relx=0.4, rely=0.2, relwidth=0.2, relheight=0.1)
 
-class SettingsFrame(ctk.CTkFrame):
+class SolveFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
         
@@ -48,13 +49,13 @@ class SettingsFrame(ctk.CTkFrame):
         ve5 = Vehicle((1 << 26) | (1 << 25), H)
         ve6 = Vehicle((1 << 28) | (1 << 20), V)
         ve7 = Vehicle((1 << 27) | (1 << 19), V)
-        ve8 = Vehicle((1 << 14) | (1 << 13), H)
-        ve9 = Vehicle((1 << 10) | (1 << 9), H)
-        # return State([ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9])
-        self.vehicle_list = [ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9]
+        # ve8 = Vehicle((1 << 14) | (1 << 13), H)
+        # ve9 = Vehicle((1 << 10) | (1 << 9), H)
+        # self.vehicle_list = [ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9]
+        self.vehicle_list = None
 
-        path, moves = a_star_solver(State(self.vehicle_list))
-        self.move_list = moves
+        # path, moves = dfs_solver(State(self.vehicle_list), max_depth=25)
+        self.move_list = None
         self.is_running = False
         self.after_id = None
 

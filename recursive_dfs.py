@@ -2,12 +2,12 @@ def backtracking_dfs(state, path, move_seq, visited_masks, max_depth=50):
     current_mask = state.get_mask()
 
     if len(path) > max_depth:
-        print(f"  Reached max depth {max_depth}, backtracking...")
-        return None
+        # print(f"  Reached max depth {max_depth}, backtracking...")
+        return None, None
     
     if current_mask in visited_masks:
-        print(f"  Mask already visited, backtracking...")
-        return None
+        # print(f"  Mask already visited, backtracking...")
+        return None, None
     
     visited_masks.add(current_mask)
     
@@ -33,10 +33,10 @@ def backtracking_dfs(state, path, move_seq, visited_masks, max_depth=50):
             #print(f"  Solution found through this branch!")
             return result_path, result_moves
         
-        print(f"  Move {i+1} failed, trying next move...")
+        # print(f"  Move {i+1} failed, trying next move...")
 
     visited_masks.remove(current_mask)
-    print(f"  All moves failed at depth {len(path)}, backtracking...")
+    # print(f"  All moves failed at depth {len(path)}, backtracking...")
     
     return None, None
 

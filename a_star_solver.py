@@ -41,14 +41,14 @@ def a_star_solver(initial_state):
     f = g + h
 
     #heapq.heappush(open_set, (f, g, initial_state, []))
-    heapq.heappush(open_set, (f, next(counter), g, init_mask, [], [])) #INITIALIZE 
+    heapq.heappush(open_set, (f, g, init_mask, [], [])) #INITIALIZE 
     visited_g[init_mask] = g
     state_map[init_mask] = initial_state
 
     step = 0
     while open_set:
-        #f, g, state, path = heapq.heappop(open_set)
-        f, _, g, current_mask, path, move_seq = heapq.heappop(open_set)
+        f, g, current_mask, path, move_seq = heapq.heappop(open_set)
+        # f, _, g, current_mask, path, move_seq = heapq.heappop(open_set)
         state = state_map[current_mask]
         step += 1
 
@@ -71,8 +71,8 @@ def a_star_solver(initial_state):
             if new_g < visited_g[next_mask]:
                 visited_g[next_mask] = new_g
                 state_map[next_mask] = next_state
-                #heapq.heappush(open_set, (new_f, new_g, next_state, path + [state]))
-                heapq.heappush(open_set, (new_f, next(counter), new_g, next_mask, path + [state], move_seq + [move]))
+                heapq.heappush(open_set, (new_f, new_g, next_mask, path + [state], move_seq + [move]))
+                # heapq.heappush(open_set, (new_f, next(counter), new_g, next_mask, path + [state], move_seq + [move]))
  
 
         # Giới hạn open set (OPTIONAL)  

@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 from vehicle import Vehicle, V, H
 from state import State
 from a_star_solver import a_star_solver
+from recursive_dfs import dfs_solver
 
 class App(ctk.CTk):
     def __init__(self):
@@ -14,7 +15,7 @@ class App(ctk.CTk):
 
         self.frames = {}
 
-        for F in (HomeFrame, SettingsFrame):
+        for F in (HomeFrame, SolverFrame):
             frame = F(parent=self)
             self.frames[F.__name__] = frame
             frame.place(relwidth=1, relheight=1)
@@ -31,13 +32,13 @@ class HomeFrame(ctk.CTkFrame):
         super().__init__(parent)
         
         label = ctk.CTkLabel(self, text="RUSH HOUR SOLVER", font=("Arial", 24))
-        button1 = ctk.CTkButton(self, text="START", command=lambda: parent.show_frame("SettingsFrame"))
+        button1 = ctk.CTkButton(self, text="START", command=lambda: parent.show_frame("SolverFrame"))
         button2 = ctk.CTkButton(self, text="QUIT", command=lambda: parent.destroy())
         label.place(relx=0.3, rely=0, relwidth=0.4, relheight=0.1)
         button1.place(relx=0.4, rely=0.1, relwidth=0.2, relheight=0.1)
         button2.place(relx=0.4, rely=0.2, relwidth=0.2, relheight=0.1)
 
-class SettingsFrame(ctk.CTkFrame):
+class SolverFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
         
@@ -50,61 +51,91 @@ class SettingsFrame(ctk.CTkFrame):
         ve7 = Vehicle((1 << 27) | (1 << 19), V)
         ve8 = Vehicle((1 << 14) | (1 << 13), H)
         ve9 = Vehicle((1 << 10) | (1 << 9), H)
-        # return State([ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9])
         self.vehicle_list = [ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9]
 
-        path, moves, cost = a_star_solver(State(self.vehicle_list))
-        print(cost)
-        self.move_list = moves
+        # path, moves = dfs_solver(State(self.vehicle_list), max_depth=25)
+        self.move_list = None
         self.is_running = False
         self.after_id = None
 
-        home_button = ctk.CTkButton(self, text="Back to Home",command=lambda: self.go_home(parent))
-        home_button.place(x=650, y=110)
+        home_button = ctk.CTkButton(self, text="Back to Home", command=lambda: self.go_home(parent))
+        home_button.place(x=650, y=80)
+        solve_button = ctk.CTkButton(self, text="Solve", command=self.solve)
+        solve_button.place(x=650, y=400)
+
+        self.message_displayer = ctk.CTkLabel(self, text="", width=120)
+        self.message_displayer.place(x=725, y=450, anchor='center')
 
         # These guys need to be attributes in order to call them in functions
         self.pause_button = ctk.CTkButton(self, text="PAUSE", command=self.pause)
         self.play_button = ctk.CTkButton(self, text="PLAY", command=self.play)
         self.reset_button = ctk.CTkButton(self, text="RESET", command=self.reset)
-        self.board = PuzzleBoard(self, 600, 600).create_vehicle_list(self.vehicle_list)
-        self.board.create_move_list(self.move_list)
+        self.board = None
 
-        self.play_button.place(x=650, y=140)
-        self.pause_button.place(x=650, y=140)
-        self.reset_button.place(x=650, y=170)
-        self.board.place(x=200, y=100)
+        self.play_button.place(x=650, y=210)
+        self.pause_button.place(x=650, y=240)
+        self.reset_button.place(x=650, y=270)
 
         # Algorithm options
-        options = ['DFS', 'BFS', 'UCS', 'A*']
-        self.algorithm = ctk.StringVar(value=options[0])
-        option_menu = ctk.CTkOptionMenu(self, values=options, variable=self.algorithm)
+        algorithm_options = ['DFS', 'BFS', 'UCS', 'A*']
+        self.algorithm = ctk.StringVar(value='DFS')
+        algorithm_menu = ScrollableButton(self, options=algorithm_options, textvariable=self.algorithm)
 
-        option_menu.place(x=650, y=200)
+        algorithm_menu.place(x=650, y=180)
+
+        # Map options
+        map_options = [f"MAP {i:02}" for i in range(1, 11)]
+        self.map = ctk.StringVar(value='MAP 01')
+        map_menu = ScrollableButton(self, options=map_options, textvariable=self.map, command=self.update_map)
+
+        map_menu.place(x=650, y=150)
+
+        self.update_map()
+
 
     def animate(self):
         if self.is_running == False:
             return None
         
         self.board.solve()
+
         self.after_id = self.after(1800, self.animate)
 
+    def display_message(self, text):
+        self.message_displayer.configure(text=text)
+
+    def load_map(self):
+        self.vehicle_list = []
+        with open(f"Map/{self.map}.txt", "r", encoding="utf-8") as f:
+            for line in f:
+                mask, orientation = map(int, line.split())
+                self.vehicle_list.append(Vehicle(mask, orientation))
+
     def play(self):
+        if self.move_list == None:
+            self.display_message("Please solve!")
+            return
+        
         self.is_running = True
+        self.display_message("Playing!")
         self.pause_button.tkraise()
+
         self.after_id = self.board.after(500, self.animate)
     
     def pause(self):
         if self.after_id:
             self.after_cancel(self.after_id)
             self.after_id = None
-        self.is_running = False
 
+        self.is_running = False
+        self.display_message("Pausing!")
         self.play_button.tkraise()
 
     def reset(self):
         if self.after_id:
             self.after_cancel(self.after_id)
             self.after_id = None
+
         self.is_running = False
 
         self.play_button.tkraise()
@@ -113,6 +144,38 @@ class SettingsFrame(ctk.CTkFrame):
             self.board.destroy()
             self.board = PuzzleBoard(self, 600, 600).create_vehicle_list(self.vehicle_list)
             self.board.place(x=200, y=100)
+
+    def solve(self):
+        if self.move_list != None:
+            return
+
+        initital_state = State(self.vehicle_list)
+        solver = None
+
+        algorithm = self.algorithm.get()
+        if algorithm == 'DFS':
+            pass
+        elif algorithm == 'BFS':
+            pass
+        elif algorithm == 'UCS':
+            pass
+        else:
+            pass
+        
+        self.display_message(f"{algorithm} running!")
+        # path, moves, costs = solver.solve()
+
+    def update_map(self):
+        map = self.map.get()
+
+        # self.vehicle_list = self.load_vehicle()
+        
+        if self.board != None:
+            self.board.destroy()
+        self.board = PuzzleBoard(self, 600, 600).create_vehicle_list(self.vehicle_list)
+        self.board.place(x=200, y=100)
+
+        self.display_message(f"{map} loaded!")
 
     def go_home(self, parent):
         self.reset()
@@ -238,6 +301,35 @@ class PuzzleBoard(ctk.CTkCanvas):
     def moved(self):
         return self.current_move > 0
 
+
+class ScrollableButton(ctk.CTkButton):
+    def __init__(self, parent, options, textvariable, **kwargs):
+        super().__init__(parent, textvariable=textvariable, **kwargs)
+        self.options = options
+        self.index = 0
+        self.var = textvariable
+
+        # Bind mouse scroll events
+        self.bind("<MouseWheel>", self.on_mousewheel)        # Windows/macOS
+        self.bind("<Button-4>", self.on_mousewheel_linux)    # Linux scroll up
+        self.bind("<Button-5>", self.on_mousewheel_linux)    # Linux scroll down
+    
+    def update_var(self):
+        self.var.set(self.options[self.index])
+
+    def on_mousewheel(self, event):
+        if event.delta > 0:
+            self.index = (self.index - 1) % len(self.options)
+        else:
+            self.index = (self.index + 1) % len(self.options)
+        self.update_var()
+
+    def on_mousewheel_linux(self, event):
+        if event.num == 4:
+            self.index = (self.index - 1) % len(self.options)
+        elif event.num == 5:
+            self.index = (self.index + 1) % len(self.options)
+        self.update_var()
 
 if __name__ == "__main__":
     app = App()

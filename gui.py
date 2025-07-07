@@ -88,7 +88,7 @@ class SolverFrame(ctk.CTkFrame):
         # Map options
         map_options = [f"MAP {i:02}" for i in range(1, 11)]
         self.map = ctk.StringVar(value='MAP 01')
-        map_menu = ScrollableButton(self, options=map_options, textvariable=self.map)
+        map_menu = ScrollableButton(self, options=map_options, textvariable=self.map, command=self.update_map)
 
         map_menu.place(x=650, y=150)
 
@@ -157,6 +157,13 @@ class SolverFrame(ctk.CTkFrame):
         
         self.display_message(f"{algorithm} running!")
         # path, moves, costs = solver.solve()
+
+    def update_map(self):
+        self.vehicle_list = self.load_vehicle(self.map.get())
+        
+        self.board.destroy()
+        self.board = PuzzleBoard(self, 600, 600).create_vehicle_list(self.vehicle_list)
+        self.board.place(x=200, y=100)
 
     def go_home(self, parent):
         self.reset()
@@ -284,8 +291,8 @@ class PuzzleBoard(ctk.CTkCanvas):
 
 
 class ScrollableButton(ctk.CTkButton):
-    def __init__(self, parent, options, textvariable):
-        super().__init__(parent, textvariable=textvariable)
+    def __init__(self, parent, options, textvariable, **kwargs):
+        super().__init__(parent, textvariable=textvariable, **kwargs)
         self.options = options
         self.index = 0
         self.var = textvariable

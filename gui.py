@@ -53,7 +53,8 @@ class SettingsFrame(ctk.CTkFrame):
         # return State([ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9])
         self.vehicle_list = [ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9]
 
-        path, moves = a_star_solver(State(self.vehicle_list))
+        path, moves, cost = a_star_solver(State(self.vehicle_list))
+        print(cost)
         self.move_list = moves
         self.is_running = False
         self.after_id = None

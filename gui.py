@@ -70,13 +70,11 @@ class SolverFrame(ctk.CTkFrame):
         self.pause_button = ctk.CTkButton(self, text="PAUSE", command=self.pause)
         self.play_button = ctk.CTkButton(self, text="PLAY", command=self.play)
         self.reset_button = ctk.CTkButton(self, text="RESET", command=self.reset)
-        self.board = PuzzleBoard(self, 600, 600).create_vehicle_list(self.vehicle_list)
-        self.board.create_move_list(self.move_list)
+        self.board = None
 
         self.play_button.place(x=650, y=210)
         self.pause_button.place(x=650, y=240)
         self.reset_button.place(x=650, y=270)
-        self.board.place(x=200, y=100)
 
         # Algorithm options
         algorithm_options = ['DFS', 'BFS', 'UCS', 'A*']
@@ -92,6 +90,8 @@ class SolverFrame(ctk.CTkFrame):
 
         map_menu.place(x=650, y=150)
 
+        self.update_map()
+
 
     def animate(self):
         if self.is_running == False:
@@ -103,6 +103,13 @@ class SolverFrame(ctk.CTkFrame):
 
     def display_message(self, text):
         self.message_displayer.configure(text=text)
+
+    def load_map(self):
+        self.vehicle_list = []
+        with open(f"Map/{self.map}.txt", "r", encoding="utf-8") as f:
+            for line in f:
+                mask, orientation = map(int, line.split())
+                self.vehicle_list.append(Vehicle(mask, orientation))
 
     def play(self):
         if self.move_list == None:
@@ -159,11 +166,16 @@ class SolverFrame(ctk.CTkFrame):
         # path, moves, costs = solver.solve()
 
     def update_map(self):
-        self.vehicle_list = self.load_vehicle(self.map.get())
+        map = self.map.get()
+
+        # self.vehicle_list = self.load_vehicle()
         
-        self.board.destroy()
+        if self.board != None:
+            self.board.destroy()
         self.board = PuzzleBoard(self, 600, 600).create_vehicle_list(self.vehicle_list)
         self.board.place(x=200, y=100)
+
+        self.display_message(f"{map} loaded!")
 
     def go_home(self, parent):
         self.reset()

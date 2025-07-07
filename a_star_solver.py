@@ -70,7 +70,7 @@ def a_star_solver(initial_state):
             print(f"🎯 Đã tìm thấy lời giải sau {step} lần expanded.")
             print(f"⏱️ Thời gian: {time.time() - start_time:.2f} giây")
             path, moves = reconstruct_path(came_from, current_mask, state_map)
-            return path, moves, g
+            return path, moves, [visited_g[state.get_mask()] + fast_heuristic(state) for state in path]
 
         if g > visited_g[current_mask]:
             continue

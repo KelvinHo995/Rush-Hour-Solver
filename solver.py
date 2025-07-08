@@ -82,6 +82,71 @@ class BFSSolver(Solver):
         print("BFS không tìm thấy lời giải.")
         return None, None, None
     
+class IDSSolver(Solver):
+    def __init__(self, initial_state):
+        super().__init__(inital_state=initial_state)
+    
+    def solve(self):
+        return self.ids_solver()
+    
+    def dfs(self, state, path, move_seq, visited_masks, max_depth=50):
+        current_mask = state.get_separate_mask()
+
+        if len(path) > max_depth:
+            return None, None
+        
+        if current_mask in visited_masks:
+            return None, None
+        
+        visited_masks.add(current_mask)
+        
+        moves, successors = state.get_successors()
+        
+        for move, next_state in zip(moves, successors):
+            new_path = path + [next_state]
+            new_move_seq = move_seq + [move]
+
+            if next_state.is_goal():
+                return new_path, new_move_seq
+
+            result_path, result_moves = self.dfs(
+                next_state, 
+                new_path,
+                new_move_seq,
+                visited_masks, 
+                max_depth, 
+            )
+
+            if result_path is not None:
+                return result_path, result_moves
+                
+        return None, None
+
+    def ids_solver(self, max_depth=50):
+        initial_state = self.initial_state
+        print(f"=== Bắt đầu IDS ===")
+        
+        for depth in range(max_depth + 1):
+            print(f"\n Đang thử với độ sâu giới hạn là: {depth}")
+            visited_masks = set()
+
+            result_path, result_moves = self.dfs(
+                initial_state, 
+                [initial_state], 
+                [],
+                visited_masks, 
+                depth, 
+            )
+
+            if result_path is not None:
+                print(f"Tìm thấy lời giải ở độ sâu {depth}")
+                print(f"Số mask đã thăm: {len(visited_masks)}")
+                print(f"=== Kết thúc tìm kiếm ===")
+                return result_path, result_moves, None
+
+        print("Không tìm thấy lời giải.")
+        return None, None, None
+    
 class UCSSolver(Solver):
     def __init__(self, initial_state):
         super().__init__(inital_state=initial_state)

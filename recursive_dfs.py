@@ -56,4 +56,4 @@ def dfs_solver(initial_state, max_depth=50):
     print(f"=== Kết thúc tìm kiếm ===")
     print(f"Số mask đã thăm: {len(visited_masks)}")
     
-    return result_path, result_moves
+    return result_path, result_moves, None

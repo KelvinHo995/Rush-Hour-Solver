@@ -18,7 +18,7 @@ def make_map_1():
 
 def run_solver(solver_func, initial_state, solver_name):
     print(f"\n=== {solver_name} ===")
-    path, moves = solver_func(initial_state)
+    path, moves, costs = solver_func(initial_state)
 
     if path:
         print(f"{solver_name} tìm thấy lời giải với {len(path) - 1} bước.")
@@ -34,4 +34,4 @@ if __name__ == "__main__":
     print(initial_state)
 
     run_solver(bfs_solver, initial_state, "BFS")
-    run_solver(ucs_solver, initial_state, "UCS")
+    # run_solver(ucs_solver, initial_state, "UCS")

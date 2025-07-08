@@ -1,10 +1,9 @@
 import customtkinter as ctk
 import tkinter as tk
-from PIL import Image, ImageTk
 from vehicle import Vehicle, V, H
 from state import State
 from a_star_solver import a_star_solver
-from recursive_dfs import dfs_solver
+from recursive_dfs import ids_solver
 
 class App(ctk.CTk):
     def __init__(self):
@@ -163,7 +162,7 @@ class SolverFrame(ctk.CTkFrame):
             pass
         
         self.display_message(f"{algorithm} running!")
-        # path, moves, costs = solver.solve()
+        path, moves, costs = solver.solve()
 
     def update_map(self):
         map = self.map.get()

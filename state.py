@@ -10,14 +10,13 @@ class State:
         self.ver_mask = ONLY_WALLS
 
         for vehicle in vehicle_list:
-            if vehicle.orientation == H:
+            if vehicle.get_orientation() == H:
                 self.hor_mask |= vehicle.get_mask()
             else:
                 self.ver_mask |= vehicle.get_mask()
 
     def __hash__(self):
-        # return hash((self.hor_mask, self.ver_mask))
-        return self.get_mask()
+        return hash((self.hor_mask, self.ver_mask))
 
     def __str__(self):
         res = ""
@@ -32,8 +31,16 @@ class State:
     def __eq__(self, other):
         return self.hor_mask == other.hor_mask and self.ver_mask == other.ver_mask
     
+    def __lt__(self, other):
+        if self.hor_mask == other.hor_mask:
+            return self.ver_mask < other.ver_mask
+        return self.hor_mask < other.hor_mask
+    
     def is_goal(self):
         return (self.hor_mask & (1 << 33)) and (self.hor_mask & (1 << 34))
+    
+    def get_separate_mask(self):
+        return self.hor_mask, self.ver_mask
     
     def get_mask(self):
         return self.hor_mask | self.ver_mask
@@ -55,7 +62,7 @@ class State:
             #Cập nhật vehicle trong danh sách (uhuhuhhuh tìm mãi ko ra bug chỗ này)
             self.vehicle_list[id] = moved_vehicle
 
-            if vehicle.orientation == H:
+            if vehicle.get_orientation() == H:
                 self.hor_mask ^= vehicle.get_mask()
                 self.hor_mask |= moved_vehicle.get_mask()
             else:

@@ -33,6 +33,7 @@ class Vehicle:
 
         if orientation == V:
             self.mask |= 1
+            
         return self
 
     def get_position(self):

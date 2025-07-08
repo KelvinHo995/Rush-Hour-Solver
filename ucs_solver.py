@@ -1,6 +1,5 @@
 import heapq
 from collections import defaultdict
-from itertools import count
 
 def reconstruct_path(came_from, current_masks, state_map):
     path = []

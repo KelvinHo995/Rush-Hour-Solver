@@ -1,5 +1,5 @@
 def backtracking_dfs(state, path, move_seq, visited_masks, max_depth=50):
-    current_mask = state.get_mask()
+    current_mask = state.get_separate_mask()
 
     if len(path) > max_depth:
         # print(f"  Reached max depth {max_depth}, backtracking...")
@@ -56,4 +56,4 @@ def dfs_solver(initial_state, max_depth=50):
     print(f"=== Kết thúc tìm kiếm ===")
     print(f"Số mask đã thăm: {len(visited_masks)}")
     
-    return result_path, result_moves
+    return result_path, result_moves, None

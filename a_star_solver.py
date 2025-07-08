@@ -23,17 +23,17 @@ def fast_heuristic(state):
     blocking_bits = state.get_mask() & BLOCKING_PATH_MASK
     return popcount(blocking_bits) + distance_from_bits(red_car_bits)
 
-def reconstruct_path(came_from, current_mask, state_map):
+def reconstruct_path(came_from, current_masks, state_map):
     path = []
     moves = []
 
-    while current_mask in came_from:
-        parent_mask, move = came_from[current_mask]
-        path.append(state_map[current_mask])
+    while current_masks in came_from:
+        parent_masks, move = came_from[current_masks]
+        path.append(state_map[current_masks])
         moves.append(move)
-        current_mask = parent_mask
+        current_masks = parent_masks
 
-    path.append(state_map[current_mask])  # initial_state
+    path.append(state_map[current_masks])  # initial_state
     path.reverse()
     moves.reverse()
     return path, moves
@@ -45,49 +45,48 @@ def a_star_solver(initial_state):
     start_time = time.time()
     print("=== Bắt đầu A* Search ===")
 
-    counter = count()
     visited_g = defaultdict(lambda: float("inf"))  # lưu g nhỏ nhất từng gặp
     open_set = []
     state_map = {}  # bitmask → state object
     came_from = {}
 
-    init_mask = initial_state.get_mask()    
+    init_masks = initial_state.get_separate_mask()    
     g = 0
     h = fast_heuristic(initial_state)
     f = g + h
 
-    heapq.heappush(open_set, (f, g, init_mask)) #INITIALIZE 
-    visited_g[init_mask] = g
-    state_map[init_mask] = initial_state
+    heapq.heappush(open_set, (f, g, init_masks)) #INITIALIZE 
+    visited_g[init_masks] = g
+    state_map[init_masks] = initial_state
 
     step = 0
     while open_set:
-        f, g, current_mask = heapq.heappop(open_set)
-        state = state_map[current_mask] #lấy lại state từ current_bitmask để check_goal, thay vì lưu state vào trong heapq
+        f, g, current_masks = heapq.heappop(open_set)
+        state = state_map[current_masks] #lấy lại state từ current_bitmask để check_goal, thay vì lưu state vào trong heapq
         step += 1
 
         if state.is_goal():
             print(f"🎯 Đã tìm thấy lời giải sau {step} lần expanded.")
             print(f"⏱️ Thời gian: {time.time() - start_time:.2f} giây")
-            path, moves = reconstruct_path(came_from, current_mask, state_map)
-            return path, moves, [visited_g[state.get_mask()] + fast_heuristic(state) for state in path]
+            path, moves = reconstruct_path(came_from, current_masks, state_map)
+            return path, moves, [visited_g[state.get_separate_mask()] + fast_heuristic(state) for state in path]
 
-        if g > visited_g[current_mask]:
+        if g > visited_g[current_masks]:
             continue
 
         moves, successors = state.get_successors()
 
         for move, next_state in zip(moves, successors):
-            next_mask = next_state.get_mask()
+            next_masks = next_state.get_separate_mask()
             new_g = g + state.vehicle_list[move[0]].get_weight()
             new_h = fast_heuristic(next_state)
             new_f = new_g + new_h
 
-            if new_g < visited_g[next_mask]:
-                visited_g[next_mask] = new_g
-                state_map[next_mask] = next_state
-                came_from[next_mask] = (current_mask, move)
-                heapq.heappush(open_set, (new_f, new_g, next_mask))
+            if new_g < visited_g[next_masks]:
+                visited_g[next_masks] = new_g
+                state_map[next_masks] = next_state
+                came_from[next_masks] = (current_masks, move)
+                heapq.heappush(open_set, (new_f, new_g, next_masks))
 
         if len(open_set) > MAX_OPEN_SET_SIZE:
             open_set = heapq.nsmallest(MAX_OPEN_SET_SIZE // 2, open_set)

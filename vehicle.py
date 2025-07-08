@@ -5,26 +5,34 @@ V = 8
 class Vehicle:
     def __init__(self, mask, orientation):
         self.mask = mask
-        self.orientation = orientation
+        if orientation == V:
+            self.mask |= 1
     
     def deepcopy(self):
         return deepcopy(self)
     
     def get_mask(self):
-        return self.mask
+        return (self.mask & ~1)
     
     def get_orientation(self):
-        return self.orientation
+        if self.mask & 1 == 1:
+            return V
+        return H
     
     def get_weight(self):
-        return self.mask.bit_count()
+        return self.mask.bit_count() - 1
     
     def move(self, step):
-        if step == 1: # Forward -> Right or Down
-            self.mask >>= self.orientation
-        elif step == -1: # Backward -> Left or Up
-            self.mask <<= self.orientation
+        orientation = self.get_orientation()
+        self.mask &= ~1
 
+        if step == 1: # Forward -> Right or Down
+            self.mask >>= orientation
+        elif step == -1: # Backward -> Left or Up
+            self.mask <<= orientation
+
+        if orientation == V:
+            self.mask |= 1
         return self
 
     def get_position(self):

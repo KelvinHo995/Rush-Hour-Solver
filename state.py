@@ -4,17 +4,38 @@ from vehicle import Vehicle, H, V
 ONLY_WALLS = 18411139144890810879
 
 class State:
-    def __init__(self, vehicle_list):
-        self.vehicle_list = deepcopy(vehicle_list)
+    vehicle_orientation = []
+    vehicle_weight = []
+
+    def __init__(self, vehicle_list, init_static=True):
+        self.vehicle_mask = []
         self.hor_mask = ONLY_WALLS
         self.ver_mask = ONLY_WALLS
 
         for vehicle in vehicle_list:
-            if vehicle.get_orientation() == H:
-                self.hor_mask |= vehicle.get_mask()
-            else:
-                self.ver_mask |= vehicle.get_mask()
+            mask = vehicle.get_mask()
 
+            self.vehicle_mask.append(mask)
+
+            if vehicle.get_orientation() == H:
+                self.hor_mask |= vehicle.mask
+            else:
+                self.ver_mask |= vehicle.mask
+
+            if init_static:
+                self.vehicle_orientation.append(vehicle.get_orientation())
+                self.vehicle_weight.append(vehicle.get_weight())
+
+    @classmethod
+    def from_masks(cls, vehicle_mask):
+        vehicle_list = []
+
+        for i, mask in enumerate(vehicle_mask):
+            vehicle = Vehicle(mask, cls.vehicle_orientation[i])
+            vehicle_list.append(vehicle)
+
+        return cls(vehicle_list, False)
+    
     def __hash__(self):
         return hash((self.hor_mask, self.ver_mask))
 
@@ -45,29 +66,37 @@ class State:
     def get_mask(self):
         return self.hor_mask | self.ver_mask
     
-    def get_red_car_mask(self):
-        return self.vehicle_list[0].get_mask()
+    def get_vehicle_mask(self, id):
+        return self.vehicle_mask[id]
+    
+    def get_vehicle_weight(self, id):
+        return self.vehicle_weight[id]
+    
+    def get_vehicle_orientation(self, id):
+        return self.vehicle_orientation[id]
     
     def deepcopy(self):
         return deepcopy(self)
     
     def move_vehicle(self, id, step):
-        vehicle = self.vehicle_list[id]
-        moved_vehicle = vehicle.deepcopy().move(step)
+        current_mask = self.vehicle_mask[id]
+        orientation = self.vehicle_orientation[id]
 
-        occupied_mask = self.get_mask() ^ vehicle.get_mask()
-        collision = occupied_mask & moved_vehicle.get_mask()
+        next_mask = Vehicle(current_mask, orientation).move(step).get_mask()
+
+        occupied_mask = self.get_mask() ^ current_mask
+        collision = occupied_mask & next_mask
         
         if not collision:
             #Cập nhật vehicle trong danh sách (uhuhuhhuh tìm mãi ko ra bug chỗ này)
-            self.vehicle_list[id] = moved_vehicle
+            self.vehicle_mask[id] = next_mask
 
-            if vehicle.get_orientation() == H:
-                self.hor_mask ^= vehicle.get_mask()
-                self.hor_mask |= moved_vehicle.get_mask()
+            if orientation == H:
+                self.hor_mask ^= current_mask
+                self.hor_mask |= next_mask
             else:
-                self.ver_mask ^= vehicle.get_mask()
-                self.ver_mask |= moved_vehicle.get_mask()
+                self.ver_mask ^= current_mask
+                self.ver_mask |= next_mask
             
             return True
 
@@ -77,17 +106,17 @@ class State:
         moves = []
         next_states = []
 
-        for i in range(len(self.vehicle_list)):
+        for i in range(len(self.vehicle_mask)):
             #Tiến
-            next_state = self.deepcopy()
+            next_state = State.from_masks(self.vehicle_mask.copy())
             if next_state.move_vehicle(i, 1):
                 moves.append((i, 1))
-                next_states.append(next_state.deepcopy())
+                next_states.append(next_state)
 
             #Lùi
-            next_state = self.deepcopy()
+            next_state = State.from_masks(self.vehicle_mask.copy())
             if next_state.move_vehicle(i, -1):
                 moves.append((i, -1))
-                next_states.append(next_state.deepcopy())
+                next_states.append(next_state)
 
         return moves, next_states

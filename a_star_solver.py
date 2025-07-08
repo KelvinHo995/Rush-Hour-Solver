@@ -19,7 +19,7 @@ def distance_from_bits(red_car_mask):
     return 6 - (lsb & 7)
 
 def fast_heuristic(state):
-    red_car_bits = state.get_red_car_mask()
+    red_car_bits = state.get_vehicle_mask(0)
     blocking_bits = state.get_mask() & BLOCKING_PATH_MASK
     return popcount(blocking_bits) + distance_from_bits(red_car_bits)
 
@@ -78,7 +78,7 @@ def a_star_solver(initial_state):
 
         for move, next_state in zip(moves, successors):
             next_masks = next_state.get_separate_mask()
-            new_g = g + state.vehicle_list[move[0]].get_weight()
+            new_g = g + state.get_vehicle_weight(move[0])
             new_h = fast_heuristic(next_state)
             new_f = new_g + new_h
 

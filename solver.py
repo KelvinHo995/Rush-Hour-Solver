@@ -207,17 +207,17 @@ class AStarSolver(Solver):
     def solve(self):
         return self.a_star_solver()
     
-    def popcount(x):
+    def popcount(self, x):
         return x.bit_count()
 
-    def distance_from_bits(red_car_mask):
+    def distance_from_bits(self, red_car_mask):
         # Tìm vị trí bit bên phải nhất (tức đầu xe đỏ hướng ra goal)
         lsb = (red_car_mask & -red_car_mask)  
         return 6 - (lsb & 7)
 
     def fast_heuristic(self, state):
         red_car_bits = state.get_vehicle_mask(0)
-        blocking_bits = state.get_mask() & self.BLOCKING_PATH_MASK
+        blocking_bits = (state.get_mask() & self.BLOCKING_PATH_MASK)
         return self.popcount(blocking_bits) + self.distance_from_bits(red_car_bits)
     
     def a_star_solver(self):

@@ -1,8 +1,6 @@
 from state import State
 from vehicle import Vehicle
-from bfs_solver import bfs_solver
-from ucs_solver import ucs_solver
-
+from solver import IDSSolver, BFSSolver, AStarSolver, UCSSolver
 H = 1  # Horizontal
 V = 8  # Vertical
 
@@ -33,5 +31,5 @@ if __name__ == "__main__":
     print("=== TRẠNG THÁI BAN ĐẦU ===")
     print(initial_state)
 
-    run_solver(bfs_solver, initial_state, "BFS")
-    # run_solver(ucs_solver, initial_state, "UCS")
+    solver = BFSSolver(initial_state)
+    path, moves, costs = solver.solve()

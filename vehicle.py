@@ -20,7 +20,7 @@ class Vehicle:
         return H
     
     def get_weight(self):
-        return self.mask.bit_count() - 1
+        return self.get_mask().bit_count()
     
     def move(self, step):
         orientation = self.get_orientation()

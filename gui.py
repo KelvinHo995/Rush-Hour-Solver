@@ -1,10 +1,7 @@
 import customtkinter as ctk
-import tkinter as tk
-from PIL import Image, ImageTk
 from vehicle import Vehicle, V, H
 from state import State
-from a_star_solver import a_star_solver
-from recursive_dfs import dfs_solver
+from solver import BFSSolver, IDSSolver, UCSSolver, AStarSolver
 
 class App(ctk.CTk):
     def __init__(self):
@@ -77,8 +74,8 @@ class SolverFrame(ctk.CTkFrame):
         self.reset_button.place(x=650, y=270)
 
         # Algorithm options
-        algorithm_options = ['DFS', 'BFS', 'UCS', 'A*']
-        self.algorithm = ctk.StringVar(value='DFS')
+        algorithm_options = ['BFS', 'IDS', 'UCS', 'A*']
+        self.algorithm = ctk.StringVar(value='BFS')
         algorithm_menu = ScrollableButton(self, options=algorithm_options, textvariable=self.algorithm)
 
         algorithm_menu.place(x=650, y=180)
@@ -153,17 +150,20 @@ class SolverFrame(ctk.CTkFrame):
         solver = None
 
         algorithm = self.algorithm.get()
-        if algorithm == 'DFS':
-            pass
+        if algorithm == 'IDS':
+            solver = IDSSolver(initital_state)
         elif algorithm == 'BFS':
-            pass
+            solver = BFSSolver(initital_state)
         elif algorithm == 'UCS':
-            pass
+            solver = UCSSolver(initital_state)
         else:
-            pass
+            solver = AStarSolver(initital_state)
         
         self.display_message(f"{algorithm} running!")
-        # path, moves, costs = solver.solve()
+        path, moves, costs = solver.solve()
+        self.display_message("Solved!")
+        self.move_list = moves
+        self.board.create_move_list(moves)
 
     def update_map(self):
         map = self.map.get()
@@ -278,6 +278,9 @@ class PuzzleBoard(ctk.CTkCanvas):
             self.after_cancel(self.after_id)
             self.after_id = None
 
+        if self.move_list == None:
+            return
+        
         if self.current_move == len(self.move_list):
             return
         

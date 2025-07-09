@@ -1,6 +1,7 @@
 from vehicle import Vehicle
 from state import State, H, V
 
+
 def make_map_1():
     ve1 = Vehicle((1 << 37) | (1 << 38), H)  #red car
     ve2 = Vehicle((1 << 54) | (1 << 46), V)

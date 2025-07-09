@@ -56,6 +56,7 @@ class BFSSolver(Solver):
             step += 1
 
             moves, successors = state.get_successors()
+            
             for move, next_state in zip(moves, successors):
                 next_masks = next_state.get_separate_mask()
 
@@ -89,16 +90,16 @@ class IDSSolver(Solver):
     def solve(self):
         return self.ids_solver()
     
-    def dfs(self, state, path, move_seq, visited_masks, max_depth=50):
-        current_mask = state.get_separate_mask()
+    def dfs(self, state, path, move_seq, min_length, max_depth=50):
+        current_masks = state.get_separate_mask()
 
-        if len(path) > max_depth:
+        if len(move_seq) >= max_depth:
             return None, None
         
-        if current_mask in visited_masks:
+        if min_length[current_masks] <= len(move_seq):
             return None, None
         
-        visited_masks.add(current_mask)
+        min_length[current_masks] = len(move_seq)
         
         moves, successors = state.get_successors()
         
@@ -113,7 +114,7 @@ class IDSSolver(Solver):
                 next_state, 
                 new_path,
                 new_move_seq,
-                visited_masks, 
+                min_length,
                 max_depth, 
             )
 
@@ -122,30 +123,76 @@ class IDSSolver(Solver):
                 
         return None, None
 
-    def ids_solver(self, max_depth=50):
+    def ids_solver(self, max_depth=52):
+        start_time = time.time()
+
         initial_state = self.initial_state
         print(f"=== Bắt đầu IDS ===")
         
-        for depth in range(max_depth + 1):
-            print(f"\n Đang thử với độ sâu giới hạn là: {depth}")
-            visited_masks = set()
+        for depth in range(4, max_depth + 1, 4):
+            # print(f"\n Đang thử với độ sâu giới hạn là: {depth}")
+            min_length = defaultdict(lambda: float('inf'))
 
             result_path, result_moves = self.dfs(
                 initial_state, 
                 [initial_state], 
                 [],
-                visited_masks, 
-                depth, 
+                min_length, 
+                max_depth=depth, 
             )
 
-            if result_path is not None:
-                print(f"Tìm thấy lời giải ở độ sâu {depth}")
-                print(f"Số mask đã thăm: {len(visited_masks)}")
-                print(f"=== Kết thúc tìm kiếm ===")
-                return result_path, result_moves, None
+            if result_path:
+                break
+                
+        # Found nothing -> return
+        if result_path is None:
+            print("Không tìm thấy lời giải.")
+            return None, None, None
+        
+        # Found a solution at depth 
+        # Check depth - 2
+        min_length = defaultdict(lambda: float('inf'))
+        test_path, test_moves = self.dfs(
+            initial_state, 
+            [initial_state], 
+            [],
+            min_length, 
+            max_depth=depth - 2, 
+        )
 
-        print("Không tìm thấy lời giải.")
-        return None, None, None
+       
+        if test_path:  # depth - 2 exists -> check depth - 3
+            result_path, result_moves = test_path, test_moves
+
+            min_length = defaultdict(lambda: float('inf'))
+            test_path, test_moves = self.dfs(
+                initial_state, 
+                [initial_state], 
+                [],
+                min_length, 
+                max_depth=depth - 3, 
+            )
+
+            if test_path:
+                result_path, result_moves = test_path, test_moves
+        else: # else depth - 2 does not have a solution -> check depth - 1
+            min_length = defaultdict(lambda: float('inf'))
+            test_path, test_moves = self.dfs(
+                initial_state, 
+                [initial_state], 
+                [],
+                min_length, 
+                max_depth=depth - 1, 
+            )
+
+            if test_path:
+                result_path, result_moves = test_path, test_moves
+
+        print(f"Tìm thấy lời giải ở độ sâu {depth}")
+        print(f"Số mask đã thăm: {len(min_length)}")
+        print(f"Thời gian: {time.time() - start_time:.2f} giây")
+        print(f"=== Kết thúc tìm kiếm ===")
+        return result_path, result_moves, None
     
 class UCSSolver(Solver):
     def __init__(self, initial_state):
@@ -179,11 +226,14 @@ class UCSSolver(Solver):
             if state.is_goal():
                 print(f"UCS tìm thấy lời giải sau {step} bước expanded.")
                 print(f"Thời gian: {time.time() - start_time:.2f} giây")
+
                 path, moves = self.reconstruct_path(came_from, current_masks, state_map)
-                costs = [visited_g[state.get_separate_mask()] for state in path]
+                costs = [visited_g[state.get_separate_mask()] for state in path[1:]]
+
                 return path, moves, costs
 
             moves, successors = state.get_successors()
+
             for move, next_state in zip(moves, successors):
                 next_masks = next_state.get_separate_mask()
                 new_g = g + state.get_vehicle_weight(move[0])
@@ -248,8 +298,10 @@ class AStarSolver(Solver):
             if state.is_goal():
                 print(f"🎯 Đã tìm thấy lời giải sau {step} lần expanded.")
                 print(f"⏱️ Thời gian: {time.time() - start_time:.2f} giây")
+
                 path, moves = self.reconstruct_path(came_from, current_masks, state_map)
-                return path, moves, [visited_g[state.get_separate_mask()] + self.fast_heuristic(state) for state in path]
+                costs = [visited_g[state.get_separate_mask()] + self.fast_heuristic(state) for state in path[1:]]
+                return path, moves, costs
 
             if g > visited_g[current_masks]:
                 continue

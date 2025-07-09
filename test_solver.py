@@ -31,5 +31,5 @@ if __name__ == "__main__":
     print("=== TRẠNG THÁI BAN ĐẦU ===")
     print(initial_state)
 
-    solver = BFSSolver(initial_state)
+    solver = IDSSolver(initial_state)
     path, moves, costs = solver.solve()

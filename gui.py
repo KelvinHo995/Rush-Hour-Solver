@@ -36,6 +36,8 @@ class HomeFrame(ctk.CTkFrame):
         button2.place(relx=0.4, rely=0.2, relwidth=0.2, relheight=0.1)
 
 class SolverFrame(ctk.CTkFrame):
+    last_algo = None
+
     def __init__(self, parent):
         super().__init__(parent)
         
@@ -50,28 +52,23 @@ class SolverFrame(ctk.CTkFrame):
         ve9 = Vehicle((1 << 10) | (1 << 9), H)
         self.vehicle_list = [ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9]
 
-        # path, moves = dfs_solver(State(self.vehicle_list), max_depth=25)
+        # Init but not yet intereacted
         self.move_list = None
         self.is_running = False
         self.after_id = None
-
-        home_button = ctk.CTkButton(self, text="Back to Home", command=lambda: self.go_home(parent))
-        home_button.place(x=650, y=80)
-        solve_button = ctk.CTkButton(self, text="Solve", command=self.solve)
-        solve_button.place(x=650, y=400)
-
-        self.message_displayer = ctk.CTkLabel(self, text="", width=120)
-        self.message_displayer.place(x=725, y=450, anchor='center')
-
-        # These guys need to be attributes in order to call them in functions
-        self.pause_button = ctk.CTkButton(self, text="PAUSE", command=self.pause)
-        self.play_button = ctk.CTkButton(self, text="PLAY", command=self.play)
-        self.reset_button = ctk.CTkButton(self, text="RESET", command=self.reset)
+        self.current_move = 0
         self.board = None
 
-        self.play_button.place(x=650, y=210)
-        self.pause_button.place(x=650, y=240)
-        self.reset_button.place(x=650, y=270)
+        # Home sweet home
+        home_button = ctk.CTkButton(self, text="Back to Home", command=lambda: self.go_home(parent))
+        home_button.place(x=650, y=80)
+        
+        # Map options
+        map_options = [f"MAP {i:02}" for i in range(1, 11)]
+        self.map = ctk.StringVar(value='MAP 01')
+        map_menu = ScrollableButton(self, options=map_options, textvariable=self.map, command=self.update_map)
+
+        map_menu.place(x=650, y=150)
 
         # Algorithm options
         algorithm_options = ['BFS', 'IDS', 'UCS', 'A*']
@@ -80,21 +77,42 @@ class SolverFrame(ctk.CTkFrame):
 
         algorithm_menu.place(x=650, y=180)
 
-        # Map options
-        map_options = [f"MAP {i:02}" for i in range(1, 11)]
-        self.map = ctk.StringVar(value='MAP 01')
-        map_menu = ScrollableButton(self, options=map_options, textvariable=self.map, command=self.update_map)
+        # Functional buttons
+        self.pause_button = ctk.CTkButton(self, text="PAUSE", command=self.pause)
+        self.play_button = ctk.CTkButton(self, text="PLAY", command=self.play)
+        reset_button = ctk.CTkButton(self, text="RESET", command=self.reset)
+        solve_button = ctk.CTkButton(self, text="SOLVE", command=self.solve)
 
-        map_menu.place(x=650, y=150)
+        self.play_button.place(x=650, y=210)
+        self.pause_button.place(x=650, y=210)
+        reset_button.place(x=650, y=240)
+        solve_button.place(x=650, y=400)
 
+        # Message displayer
+        self.message_displayer = ctk.CTkLabel(self, text="", width=120)
+        self.message_displayer.place(x=725, y=450, anchor='center')
+
+        # Steps and costs displayer
+        self.step_button = ctk.CTkButton(self, text="STEP\n", height=60)
+        self.cost_button = ctk.CTkButton(self, text="COST\n", height=60)
+
+        self.step_button.place(x=650, y=500)
+        self.cost_button.place(x=650, y=560)
+        # Render the first map
         self.update_map()
 
 
     def animate(self):
         if self.is_running == False:
             return None
+        if self.current_move == len(self.move_list):
+            return None
         
-        self.board.solve()
+        self.board.solve(self.current_move)
+        self.step_button.configure(text=f"STEP\n{self.current_move}")
+        current_cost = self.cost_list[self.current_move] if self.cost_list else ""
+        self.cost_button.configure(text=f"COST\n{current_cost}")
+        self.current_move += 1
 
         self.after_id = self.after(1800, self.animate)
 
@@ -137,15 +155,14 @@ class SolverFrame(ctk.CTkFrame):
 
         self.play_button.tkraise()
 
-        if self.board.moved():
+        if self.current_move > 0:
             self.board.destroy()
             self.board = PuzzleBoard(self, 600, 600).create_vehicle_list(self.vehicle_list)
             self.board.place(x=200, y=100)
+        
+        self.current_move = 0
 
     def solve(self):
-        if self.move_list != None:
-            return
-
         initital_state = State(self.vehicle_list)
         solver = None
 
@@ -163,6 +180,7 @@ class SolverFrame(ctk.CTkFrame):
         path, moves, costs = solver.solve()
         self.display_message("Solved!")
         self.move_list = moves
+        self.cost_list = costs
         self.board.create_move_list(moves)
 
     def update_map(self):
@@ -273,7 +291,7 @@ class PuzzleBoard(ctk.CTkCanvas):
             x = i * COL_WIDTH
             self.create_line(x, 0, x, 605, fill=COLOR, width=THICKNESS)
 
-    def solve(self):
+    def solve(self, current_move):
         if self.after_id:
             self.after_cancel(self.after_id)
             self.after_id = None
@@ -281,15 +299,13 @@ class PuzzleBoard(ctk.CTkCanvas):
         if self.move_list == None:
             return
         
-        if self.current_move == len(self.move_list):
+        if current_move == len(self.move_list):
             return
         
-        id, step = self.move_list[self.current_move]
+        id, step = self.move_list[current_move]
 
         self.slide(self.vehicle_list[id], self.orientation_list[id], step)
 
-        self.current_move += 1
-    
     def slide(self, car, orientation, step, cnt=0):
         if cnt == 50:
             return
@@ -300,10 +316,6 @@ class PuzzleBoard(ctk.CTkCanvas):
             self.move(car, 0, 2 * step)
 
         self.after_id = self.after(16, lambda: self.slide(car, orientation, step, cnt + 1))
-
-    def moved(self):
-        return self.current_move > 0
-
 
 class ScrollableButton(ctk.CTkButton):
     def __init__(self, parent, options, textvariable, **kwargs):

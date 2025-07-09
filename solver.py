@@ -2,11 +2,12 @@ import heapq
 from state import State
 from collections import defaultdict, deque
 import time
+import tracemalloc
 
 class Solver:
-    def __init__(self, inital_state):
+    def __init__(self, inital_state, trace=False):
         self.initial_state = inital_state
-
+        self.trace = trace
     def reconstruct_path(self, came_from, current_masks, state_map):
         path = []
         moves = []
@@ -26,8 +27,8 @@ class Solver:
         raise NotImplementedError("Subclasses must implement this method")
 
 class BFSSolver(Solver):
-    def __init__(self, initial_state):
-        super().__init__(inital_state=initial_state)
+    def __init__(self, initial_state, trace=False):
+        super().__init__(inital_state=initial_state, trace=trace)
     
     def solve(self):
         return self.bfs_solver()
@@ -36,6 +37,8 @@ class BFSSolver(Solver):
         initial_state = self.initial_state
 
         start_time = time.time()
+        if self.trace:
+            tracemalloc.start(1)
         print("=== Bắt đầu BFS ===")
 
         visited_masks = set()
@@ -64,12 +67,20 @@ class BFSSolver(Solver):
                 if next_state.is_goal():
                     print(f"BFS tìm thấy lời giải sau {step} bước expanded.")
                     print(f"Thời gian: {time.time() - start_time:.2f} giây")
+                    peak = 0
+                    if self.trace:
+                        _, peak = tracemalloc.get_traced_memory()
+                        print(f"Mức dữ liệu sử dụng tối đa: {peak / 1024 / 1024:.2f} MB")
+                        tracemalloc.stop()
 
                     state_map[next_masks] = next_state
                     came_from[next_masks] = (current_masks, move)
                     path, moves = self.reconstruct_path(came_from, next_masks, state_map)
 
-                    return path, moves, None
+                    if self.trace:
+                        return path, moves, None, peak
+                    else:
+                        return path, moves, None
 
                 if next_masks in visited_masks:
                     continue
@@ -81,11 +92,14 @@ class BFSSolver(Solver):
 
                 
         print("BFS không tìm thấy lời giải.")
-        return None, None, None
+        if self.trace:
+            return (None,) * 4
+        else:
+            return (None,) * 3
     
 class IDSSolver(Solver):
-    def __init__(self, initial_state):
-        super().__init__(inital_state=initial_state)
+    def __init__(self, initial_state, trace=False):
+        super().__init__(inital_state=initial_state, trace=trace)
     
     def solve(self):
         return self.ids_solver()
@@ -125,7 +139,8 @@ class IDSSolver(Solver):
 
     def ids_solver(self, max_depth=52):
         start_time = time.time()
-
+        if self.trace:
+            tracemalloc.start(1)
         initial_state = self.initial_state
         print(f"=== Bắt đầu IDS ===")
         
@@ -143,11 +158,14 @@ class IDSSolver(Solver):
 
             if result_path:
                 break
-                
+
         # Found nothing -> return
         if result_path is None:
             print("Không tìm thấy lời giải.")
-            return None, None, None
+            if self.trace:
+                return (None,) * 4
+            else:
+                return (None,) * 3
         
         # Found a solution at depth 
         # Check depth - 2
@@ -160,7 +178,6 @@ class IDSSolver(Solver):
             max_depth=depth - 2, 
         )
 
-       
         if test_path:  # depth - 2 exists -> check depth - 3
             result_path, result_moves = test_path, test_moves
 
@@ -191,19 +208,30 @@ class IDSSolver(Solver):
         print(f"Tìm thấy lời giải ở độ sâu {depth}")
         print(f"Số mask đã thăm: {len(min_length)}")
         print(f"Thời gian: {time.time() - start_time:.2f} giây")
+        if self.trace:
+            _, peak = tracemalloc.get_traced_memory()
+            print(f"Mức dữ liệu sử dụng tối đa: {peak / 1024 / 1024:.2f} MB")
+            tracemalloc.stop()
         print(f"=== Kết thúc tìm kiếm ===")
-        return result_path, result_moves, None
-    
+
+        if self.trace:
+            return result_path, result_moves, None, peak
+        else:
+            return result_path, result_moves, None    
+        
 class UCSSolver(Solver):
-    def __init__(self, initial_state):
-        super().__init__(inital_state=initial_state)
+    def __init__(self, initial_state, trace=False):
+        super().__init__(inital_state=initial_state, trace=trace)
     
     def solve(self):
         return self.ucs_solver()
     
     def ucs_solver(self):
+        if self.trace:
+            tracemalloc.start(1)
         initial_state = self.initial_state
         start_time = time.time()
+        
         print("=== Bắt đầu UCS ===")
 
         visited_g = defaultdict(lambda: float("inf"))
@@ -226,11 +254,18 @@ class UCSSolver(Solver):
             if state.is_goal():
                 print(f"UCS tìm thấy lời giải sau {step} bước expanded.")
                 print(f"Thời gian: {time.time() - start_time:.2f} giây")
+                if self.trace:
+                    _, peak = tracemalloc.get_traced_memory()
+                    print(f"Mức dữ liệu sử dụng tối đa: {peak / 1024 / 1024:.2f} MB")
+                    tracemalloc.stop()
 
                 path, moves = self.reconstruct_path(came_from, current_masks, state_map)
                 costs = [visited_g[state.get_separate_mask()] for state in path[1:]]
 
-                return path, moves, costs
+                if self.trace:
+                    return path, moves, costs, peak
+                else:
+                    return path, moves, costs 
 
             moves, successors = state.get_successors()
 
@@ -245,14 +280,17 @@ class UCSSolver(Solver):
                     heapq.heappush(open_set, (new_g, next_masks))
 
         print("UCS không tìm thấy lời giải.")
-        return None, None, None
+        if self.trace:
+            return (None,) * 4
+        else:
+            return (None,) * 3
 
 class AStarSolver(Solver):
     BLOCKING_PATH_MASK = sum(1 << bit for bit in [35, 34, 33])  # các ô từ sau xe đỏ đến goal
     MAX_OPEN_SET_SIZE = 100000
 
-    def __init__(self, initial_state):
-        super().__init__(inital_state=initial_state)
+    def __init__(self, initial_state, trace=False):
+        super().__init__(inital_state=initial_state, trace=trace)
     
     def solve(self):
         return self.a_star_solver()
@@ -271,6 +309,8 @@ class AStarSolver(Solver):
         return self.popcount(blocking_bits) + self.distance_from_bits(red_car_bits)
     
     def a_star_solver(self):
+        if self.trace:
+            tracemalloc.start(1)
         initial_state = self.initial_state
         start_time = time.time()
         print("=== Bắt đầu A* Search ===")
@@ -298,10 +338,18 @@ class AStarSolver(Solver):
             if state.is_goal():
                 print(f"🎯 Đã tìm thấy lời giải sau {step} lần expanded.")
                 print(f"⏱️ Thời gian: {time.time() - start_time:.2f} giây")
+                if self.trace:
+                    _, peak = tracemalloc.get_traced_memory()
+                    print(f"Mức dữ liệu sử dụng tối đa: {peak / 1024 / 1024:.2f} MB")
+                    tracemalloc.stop()
 
                 path, moves = self.reconstruct_path(came_from, current_masks, state_map)
                 costs = [visited_g[state.get_separate_mask()] + self.fast_heuristic(state) for state in path[1:]]
-                return path, moves, costs
+                
+                if self.trace:
+                    return path, moves, costs, peak
+                else:
+                    return path, moves, costs 
 
             if g > visited_g[current_masks]:
                 continue
@@ -325,4 +373,7 @@ class AStarSolver(Solver):
                 heapq.heapify(open_set)
 
         print("❌ Không tìm thấy lời giải.")
-        return None, None, None
+        if self.trace:
+            return (None,) * 4
+        else:
+            return (None,) * 3

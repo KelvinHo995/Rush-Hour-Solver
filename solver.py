@@ -8,6 +8,7 @@ class Solver:
     def __init__(self, inital_state, trace=False):
         self.initial_state = inital_state
         self.trace = trace
+
     def reconstruct_path(self, came_from, current_masks, state_map):
         path = []
         moves = []
@@ -104,7 +105,7 @@ class IDSSolver(Solver):
     def solve(self):
         return self.ids_solver()
     
-    def dfs(self, state, path, move_seq, min_length, max_depth=50):
+    def dfs(self, state, path, move_seq, min_length, max_depth):
         current_masks = state.get_separate_mask()
 
         if len(move_seq) >= max_depth:
@@ -137,7 +138,7 @@ class IDSSolver(Solver):
                 
         return None, None
 
-    def ids_solver(self, max_depth=52):
+    def ids_solver(self, max_depth=100):
         start_time = time.time()
         if self.trace:
             tracemalloc.start(1)

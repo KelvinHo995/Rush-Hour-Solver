@@ -5,3 +5,5 @@ __pycache__/
 *.log
 *.txt
 test.py
+experiment.py
+*.csv

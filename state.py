@@ -4,6 +4,8 @@ from vehicle import Vehicle, H, V
 ONLY_WALLS = 18411139144890810879
 
 class State:
+    __slots__ = ['vehicle_mask', 'hor_mask', 'ver_mask']
+
     vehicle_orientation = []
     vehicle_weight = []
 
@@ -11,6 +13,10 @@ class State:
         self.vehicle_mask = []
         self.hor_mask = ONLY_WALLS
         self.ver_mask = ONLY_WALLS
+
+        if init_static:
+            self.vehicle_orientation.clear()
+            self.vehicle_weight.clear()
 
         for vehicle in vehicle_list:
             mask = vehicle.get_mask()
@@ -29,12 +35,12 @@ class State:
     @classmethod
     def from_masks(cls, vehicle_mask):
         vehicle_list = []
-
+                   
         for i, mask in enumerate(vehicle_mask):
             vehicle = Vehicle(mask, cls.vehicle_orientation[i])
             vehicle_list.append(vehicle)
 
-        return cls(vehicle_list, False)
+        return cls(vehicle_list, init_static=False)
     
     def __hash__(self):
         return hash((self.hor_mask, self.ver_mask))
@@ -49,6 +55,8 @@ class State:
         
         return res
     
+    __repr__ = __str__
+
     def __eq__(self, other):
         return self.hor_mask == other.hor_mask and self.ver_mask == other.ver_mask
     

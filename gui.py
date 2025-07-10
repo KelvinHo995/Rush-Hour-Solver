@@ -8,10 +8,12 @@ import time
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("Multiscreen App")
-        self.geometry("800x700")
-        self.minsize(800, 600)
+        ctk.set_default_color_theme('dark-blue')
 
+        self.title("Rush Hour")
+        self.geometry("800x700")
+        self.minsize(800, 700)
+        self.maxsize(800, 700)
         self.frames = {}
 
         for F in (HomeFrame, SolverFrame):
@@ -28,7 +30,7 @@ class App(ctk.CTk):
 
 class HomeFrame(ctk.CTkFrame):
     def __init__(self, parent):
-        super().__init__(parent)
+        super().__init__(parent, fg_color='lightblue')
         
         label = ctk.CTkLabel(self, text="RUSH HOUR SOLVER", font=("Arial", 24))
         button1 = ctk.CTkButton(self, text="START", command=lambda: parent.show_frame("SolverFrame"))
@@ -41,7 +43,7 @@ class SolverFrame(ctk.CTkFrame):
     last_algo = None
 
     def __init__(self, parent):
-        super().__init__(parent)
+        super().__init__(parent, fg_color='lightblue')
 
         # Init but not yet intereacted
         self.move_list = None
@@ -87,8 +89,8 @@ class SolverFrame(ctk.CTkFrame):
         self.step_button = ctk.CTkButton(self, text="STEP\n", height=60)
         self.cost_button = ctk.CTkButton(self, text="COST\n", height=60)
 
-        self.step_button.place(x=650, y=500)
-        self.cost_button.place(x=650, y=560)
+        self.step_button.place(x=10, y=80)
+        self.cost_button.place(x=10, y=140)
         # Render the first map
         
         self.load_map()
@@ -100,7 +102,8 @@ class SolverFrame(ctk.CTkFrame):
             return None
         
         if self.current_move == len(self.move_list):
-            self.display_message("Done!")
+            self.display_message("Done! Please reset!")
+            self.play_button.tkraise()
             return None
         
         self.board.solve(self.current_move)

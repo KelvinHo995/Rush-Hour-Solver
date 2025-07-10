@@ -107,16 +107,16 @@ class IDSSolver(Solver):
         return self.ids_solver()
     
     def dfs(self, state, path, move_seq, min_length, max_depth):
-        # current_masks = state.get_separate_mask()
+        current_masks = state.get_separate_mask()
 
         if len(move_seq) >= max_depth:
             return None, None
         
-        if min_length[state] <= len(move_seq):
+        if min_length[current_masks] <= len(move_seq):
             return None, None
         
         self.step += 1
-        min_length[state] = len(move_seq)
+        min_length[current_masks] = len(move_seq)
         
         moves, successors = state.get_successors()
         
@@ -135,11 +135,11 @@ class IDSSolver(Solver):
                 max_depth, 
             )
 
-            path.pop()
-            move_seq.pop()
-
             if result_path is not None:
                 return result_path, result_moves
+            
+            path.pop()
+            move_seq.pop()
                 
         return None, None
 

@@ -4,6 +4,8 @@ from vehicle import Vehicle, H, V
 ONLY_WALLS = 18411139144890810879
 
 class State:
+    __slots__ = ['vehicle_mask', 'hor_mask', 'ver_mask']
+
     vehicle_orientation = []
     vehicle_weight = []
 

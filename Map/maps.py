@@ -48,7 +48,7 @@ def make_map_03():
 
 def make_map_04():
     ve1 = Vehicle((1 << 37) | (1 << 38), H)  #red car
-    ve2 = Vehicle((1 << 51) | (1 << 40) | (1 << 49), H)
+    ve2 = Vehicle((1 << 51) | (1 << 50) | (1 << 49), H)
     ve3 = Vehicle((1 << 45) | (1 << 44), H)
     ve4 = Vehicle((1 << 43) | (1 << 42) | (1 << 41), H)
     ve5 = Vehicle((1 << 30) | (1 << 29), H)
@@ -58,7 +58,7 @@ def make_map_04():
     ve8 = Vehicle((1 << 21) | (1 << 13), V)
     ve9 = Vehicle((1 << 36) | (1 << 28), V)
     ve10 = Vehicle((1 << 35) | (1 << 27), V)
-    ve11 = Vehicle((1 << 26) | (1 << 18), V)
+    ve11 = Vehicle((1 << 26) | (1 << 18) | (1 << 10), V)
     ve12 = Vehicle((1 << 33) | (1 << 25), V)
     ve13 = Vehicle((1 << 17) | (1 << 9), V)
     return [ve1, ve2, ve3, ve4, ve5, ve6, ve7, ve8, ve9, ve10, ve11, ve12, ve13]
